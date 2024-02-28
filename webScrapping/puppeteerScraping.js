@@ -20,15 +20,10 @@ async function runWebScrapping(city) {
   } catch (error) {
     console.error("An error occured:", error);
   } finally {
-    // await page.screenshot({ path: "performGoogleSearch.png", fullPage: true });
-    // const currentURL = page.url();
-    // console.log(`Current URL: ${currentURL}`);
     await browser.close();
     return data;
   }
 }
-
-// runWebScrapping("london");
 
 async function performGoogleSearch(page) {
   await page.goto("https://www.google.com/", { waitUntil: 'networkidle0' });

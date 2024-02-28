@@ -42,9 +42,9 @@ This project is an Express.js application that performs web scraping using Puppe
 
 #### GET /api/homes
 
-##### Parameters:
+> ##### Parameters:
 
-city (required): The city for which you want to fetch home data.
+> > city (required): The city for which you want to fetch home data.
 
 ## End the Program
 
