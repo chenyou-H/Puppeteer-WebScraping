@@ -2,9 +2,16 @@ const express = require("express");
 const { runWebScrapping } = require("./webScrapping/puppeteerScraping");
 
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
+const API_PATH = "/api/homes";
 
-app.get("/api/homes", async (req, res) => {
+// Middleware for error handling
+app.use((err, req, res, next) => {
+  console.error("Error:", err);
+  res.status(500).json({ error: "Internal Server Error" });
+});
+
+app.get(API_PATH, async (req, res, next) => {
   try {
     const city = req.query.city;
 
@@ -16,11 +23,11 @@ app.get("/api/homes", async (req, res) => {
     const houses = await runWebScrapping(city);
     res.json({ houses });
   } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    // Pass the error to the next middleware for centralized error handling
+    next(error);
   }
 });
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
 });
