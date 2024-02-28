@@ -1,9 +1,11 @@
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-extra");
+const StealthPlugin = require("puppeteer-extra-plugin-stealth");
+puppeteer.use(StealthPlugin());
 
 async function runWebScrapping(city) {
   // Launch the browser and open a new blank page
   // const browser = await puppeteer.launch();
-  const browser = await puppeteer.launch({});
+  const browser = await puppeteer.launch({ headless: false });
   const context = browser.defaultBrowserContext();
   // Get rid of location request and go to google home page
   await context.overridePermissions("https://www.google.com", ["geolocation"]);
@@ -12,17 +14,21 @@ async function runWebScrapping(city) {
 
   try {
     // 1) Search for "top home listing websites"
+    console.log('1) Search for "top home listing websites"');
     await googleSearch(page);
 
     // 2) Choose one of them, say Zillow
+    console.log('2) Choose one of them, say Zillow"');
     await findZillowFrom(page);
 
     // 3) Look for homes in a city
+    console.log("3) Look for homes in a city");
     await searchCity(page, city);
+    //  4) Get the list of homes and get the page content from the listing
   } catch (error) {
     console.error("An error occured:", error);
   } finally {
-    await page.screenshot({ path: "googleSearch.png" });
+    await page.screenshot({ path: "googleSearch.png", fullPage: true });
     const currentURL = page.url();
     console.log(`Current URL: ${currentURL}`);
     await browser.close();
@@ -82,18 +88,11 @@ async function findZillowFrom(page) {
     const zillowLink = await page.$(zillowLinkSelector);
 
     if (zillowLink) {
+      console.log("zillow is found");
       await zillowLink.click();
       // Wait for the Zillow page to load
       await page.waitForNavigation();
       break;
-      await page.waitForSelector("h1");
-      // Extract and print the title of the Zillow page
-      const zillowTitle = await page.$eval(
-        "h1",
-        (element) => element.textContent
-      );
-      console.log(`Title of the Zillow page: ${zillowTitle}`);
-      // await browser.close();
     } else {
       console.log(`Zillow is not found from current scope, scroll down`);
       await scrollToNextPage(page);
@@ -115,27 +114,37 @@ async function findZillowFrom(page) {
 
 async function searchCity(page, city) {
   const searchBoxSelector = "input[placeholder]";
-  // await page.waitForSelector(searchBoxSelector);
-  await page.type(searchBoxSelector, city);
+  try {
+    // await page.waitForSelector(searchBoxSelector);
+    await page.type(searchBoxSelector, city);
+  } catch (error) {
+    console.error(`Error: input with text "${searchBoxSelector}" not found.`);
+  }
 
-  // Press Enter to perform the search
-  await page.keyboard.press("Enter");
-  await page.waitForNavigation();
+  try {
+    // Press Enter to perform the search
+    await page.keyboard.press("Enter");
+    // await page.waitForNavigation();
+  } catch (error) {
+    console.error(`Error: unable to press enter`);
+  }
 
+  console.log("seach city: ", city);
   //skip the zillow question for rent or sale
   const buttonText = "Skip this question";
-
   // Use the text selector to find the button with the specified text
   const buttonSelector = `button ::-p-text("${buttonText}")`;
   // await page.waitForSelector(buttonSelector);
 
+  debugger;
   // Click the button
   try {
     // Wait for the button to be present based on the text selector
-    await page.waitForSelector(buttonSelector, { timeout: 5000 });
+    await page.waitForSelector(buttonSelector);
 
     // Click the button
     await page.click(buttonSelector);
+    await page.waitForNavigation();
 
     console.log(`Clicked the button with text: ${buttonText}`);
   } catch (error) {
